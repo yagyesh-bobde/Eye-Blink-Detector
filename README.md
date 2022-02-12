@@ -9,7 +9,6 @@ We are only observing one eye here but you can create it for both eyes and try t
 # Libraries 
 - opencv-python
 - mediapipe
-- cvzone
 
 ## Applications - 
 You can maybe use it for security purposes like a fixed number of blinks opens up something. It may be useful in health sector(<u>try to find yourself</u>)
