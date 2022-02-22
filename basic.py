@@ -4,7 +4,8 @@ import dlib                                    #for face and landmark detection
 import imutils
 from scipy.spatial import distance as dist     #for calculating dist b/w the eye landmarks
 from imutils import face_utils                 #to get the landmark ids of the left and right eyes ----you can do this manually too
-#from imutils import
+
+
 
 cam = cv2.VideoCapture('assets/me_blinking.mp4')
 
@@ -21,6 +22,14 @@ def calculate_EAR(eye) :
     EAR = (y1+y2) / x1
     return EAR
 
+#---------Mark the eye landmarks-------#
+def mark_eyeLandmark(img , eyes):
+    for eye in eyes:
+        pt1,pt2 = (eye[1] , eye[5])
+        pt3,pt4 = (eye[0],eye[3])
+        cv2.line(img,pt1,pt2,(200,00,0),2)
+        cv2.line(img, pt3, pt4, (200, 0, 0), 2)
+    return img
 
 #---------Variables-------#
 blink_thresh = 0.5
@@ -28,12 +37,14 @@ succ_frame = 2
 count_frame = 0
 
 #-------Eye landmarks------#
-(L_start , L_end) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
-(R_start , R_end) = face_utils.FACIAL_LANDMARKS_IDXS['right_eye']
+(L_start, L_end) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
+(R_start, R_end) = face_utils.FACIAL_LANDMARKS_IDXS['right_eye']
 
 #------Initializing the Models for Landmark and face Detection---------#
 detector = dlib.get_frontal_face_detector()
 landmark_predict = dlib.shape_predictor('Model/shape_predictor_68_face_landmarks.dat')
+
+
 while 1 :
 
     #------If the video ends Reset it to start-----#
@@ -52,6 +63,8 @@ while 1 :
         shape = landmark_predict(img_gray,face)
         #----converting the shape class directly to a list of (x,y) cordinates-----#
         shape = face_utils.shape_to_np(shape)
+        for lm in shape:
+            cv2.circle(frame,(lm),3,(10,2,200))
         #----parsing the landmarks list to extract lefteye and righteye landmarks--#
         lefteye = shape[L_start : L_end]
         righteye = shape[R_start:R_end]
@@ -59,6 +72,9 @@ while 1 :
         #-----Calculate the EAR---#
         left_EAR = calculate_EAR(lefteye)
         right_EAR = calculate_EAR(righteye)
+        img = frame.copy()
+        #----mark the landmarks----#
+        img = mark_eyeLandmark(img,[lefteye,righteye])
 
         #-----Avg of left and right eye EAR----#
         avg = (left_EAR+right_EAR)/2
@@ -66,11 +82,11 @@ while 1 :
             count_frame+=1
         else:
             if count_frame >= succ_frame :
-                cv2.putText(frame, 'Blink Detected',(30,30) , cv2.FONT_HERSHEY_DUPLEX , 1,(0,200,0),1)
+                cv2.putText(img, 'Blink Detected',(30,30) , cv2.FONT_HERSHEY_DUPLEX , 1,(0,200,0),1)
             else:
                 count_frame=0
 
-    cv2.imshow("Video" , frame)
+    cv2.imshow("Video", img)
     if cv2.waitKey(1) & 0xFF == ord('q') :
         break
 
